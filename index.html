@@ -39,13 +39,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 #msgs{flex:1;overflow-y:auto;padding:12px 0}
 .m{display:flex;gap:8px;padding:2px 14px;position:relative;align-items:flex-end}.m.mine{flex-direction:row-reverse}
 .m .av{width:32px;height:32px;font-size:13px}
-.b{min-width:0;max-width:min(78%,520px);background:var(--in);border-radius:16px 16px 16px 4px;padding:7px 12px}
+.b{position:relative;min-width:0;max-width:min(78%,520px);background:var(--in);border-radius:16px 16px 16px 4px;padding:7px 12px}
 .m.mine .b{background:var(--acc);color:#fff;border-radius:16px 16px 4px 16px}
 .h{font-weight:600;font-size:13px}.t{color:var(--mute);font-size:11px;margin-top:2px;text-align:right}
 .m.mine .t,.m.mine .seen,.m.mine .vp .du{color:#ffffffcc}.m.mine .rp{color:#ffffffcc;border-left-color:#fff8}
 .m.mine .rx{background:#ffffff33;color:#fff}.m.mine .rx.me{outline-color:#fff}
 .m.mine .vp{background:#ffffff33;color:#fff}.m.mine .vp .bar{background:#fff5}.m.mine .vp .bar i{background:#fff}
-.m:not(.mine) .act{right:auto;left:56px}
+.m:not(.mine) .act{right:auto;left:0}
 body:not(.chat) #f,body:not(.chat) #typ{display:none}
 .x{white-space:pre-wrap;overflow-wrap:anywhere}
 .rp{font-size:12px;color:var(--mute);border-left:3px solid var(--line);padding-left:8px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -53,8 +53,8 @@ body:not(.chat) #f,body:not(.chat) #typ{display:none}
 .vp{display:flex;align-items:center;gap:10px;background:var(--in);border:0;border-radius:18px;padding:8px 14px;margin-top:4px;min-width:170px;max-width:100%}.vp .pl{font-size:16px}.vp .bar{flex:1;height:4px;background:var(--line);border-radius:2px;overflow:hidden}.vp .bar i{display:block;height:100%;width:0;background:var(--acc)}.vp .du{font-size:12px;color:var(--mute)}
 .seen{font-size:11px;color:var(--mute);margin-top:2px}
 .rx{display:inline-block;background:var(--in);border-radius:10px;padding:1px 8px;margin:4px 4px 0 0;font-size:13px;cursor:pointer}.rx.me{outline:1px solid var(--acc)}
-.act{display:none;position:absolute;right:14px;top:-14px;background:var(--main);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;max-width:280px;z-index:2}
-@media(hover:hover){.m:hover .act{display:flex}}.m.show .act{display:flex}.act button{background:none;border:0;padding:5px 7px;font-size:14px}
+.act{display:none;position:absolute;right:0;top:-16px;background:var(--main);color:var(--text);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;width:max-content;max-width:min(340px,80vw);z-index:2;font-weight:400;text-align:left}
+@media(hover:hover){.b:hover .act{display:flex}}.m.show .act{display:flex}.act button{background:none;border:0;padding:5px 7px;font-size:14px;color:var(--text);white-space:nowrap}
 #typ{height:20px;padding:0 14px;font-size:12px;color:var(--mute)}
 #rbar,#recbar{display:none;padding:6px 14px;font-size:13px;color:var(--mute);border-top:1px solid var(--line);justify-content:space-between;align-items:center;gap:8px}#rbar.on,#recbar.on{display:flex}
 #rbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#rbar button{background:none;border:0}
@@ -240,8 +240,7 @@ function renderMsgs(){
   const rx=Object.entries(r).map(([e,o])=>{const n=Object.keys(o).length;return n?`<span class="rx ${o[uid]?"me":""}" data-e="${e}">${e} ${n}</span>`:""}).join("");
   return `<div class="m${mine?" mine":""}" data-id="${m.id}">${mine?"":avh(u.name,u.color,u.avatar)}<div class="b">${!mine&&(g||searchOn)?`<div class="h" style="color:${u.color}">${esc(u.name)}</div>`:""}
   ${m.reply?`<div class="rp">↪ ${esc(m.reply.name)}: ${esc(m.reply.text)}</div>`:""}
-  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<button class="vp" data-v="${m.id}"><span class="pl">▶</span><span class="bar"><i></i></span><span class="du">🎤 ${vdur(m.dur)}</span></button>`:""}<div>${rx}</div><div class="t">${fmt(m.ts)}${m.edited?" · edited":""}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}</div>
-  <div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${mine?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div>`}).join("");
+  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<button class="vp" data-v="${m.id}"><span class="pl">▶</span><span class="bar"><i></i></span><span class="du">🎤 ${vdur(m.dur)}</span></button>`:""}<div>${rx}</div><div class="t">${fmt(m.ts)}${m.edited?" · edited":""}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}<div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${mine?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div></div>`}).join("");
  if(stick&&!searchOn)box.scrollTop=box.scrollHeight;
 }
 $("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const vp=e.target.closest(".vp");if(vp)return playVoice(vp);const id=m.dataset.id,t=e.target;
