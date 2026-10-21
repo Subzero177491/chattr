@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chattr</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#5865f2">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chattr">
+<style>
+:root{--side:#e3e5e8;--main:#fff;--text:#2e3338;--mute:#6a7480;--acc:#5865f2;--line:#d4d7dc;--hover:#0000000d;--in:#ebedef;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--side:#2b2d31;--main:#313338;--text:#dbdee1;--mute:#949ba4;--line:#3f4147;--hover:#ffffff0f;--in:#383a40;color-scheme:dark}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--main);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{display:flex;height:100%}
+#side{width:300px;background:var(--side);display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid var(--line)}
+#brand{padding:14px 16px;font-weight:800;font-size:22px;color:var(--acc);letter-spacing:-.5px}
+.btns{display:flex;gap:8px;padding:0 12px 10px}
+.btns button{flex:1;background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px;font-weight:600}
+.btns button.g{background:var(--in);color:var(--text)}
+#list{flex:1;overflow-y:auto;padding:4px 8px}
+.row{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:8px;border-radius:8px}
+.row:hover,.row.on{background:var(--hover)}.row .tx{min-width:0;flex:1}
+.row b,.row small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row small{color:var(--mute);font-size:12px}
+#me{padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--mute);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#me button{background:var(--in);border:0;border-radius:6px;padding:4px 8px;font-size:12px}
+.av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:700}
+.avw{position:relative;flex-shrink:0}.dot{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;background:#3ba55d;border:2px solid var(--side)}
+.bd{background:#ed4245;color:#fff;border-radius:10px;min-width:20px;padding:0 6px;font-size:12px;text-align:center;font-weight:700}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#top{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+#hd{min-width:0;flex:1}#cn{font-weight:700;display:block}#st{font-size:12px;color:var(--mute)}
+#back,#more{background:none;border:0;font-size:22px;padding:0 6px}#back{display:none}#more{display:none}
+#msgs{flex:1;overflow-y:auto;padding:12px 0}
+.m{display:flex;gap:12px;padding:4px 14px;position:relative}.m:hover{background:var(--hover)}
+.m .av{margin-top:2px;width:36px;height:36px}.b{min-width:0;flex:1}
+.h{font-weight:600}.t{color:var(--mute);font-size:11px;margin-left:6px;font-weight:400}
+.x{white-space:pre-wrap;overflow-wrap:anywhere}
+.rp{font-size:12px;color:var(--mute);border-left:3px solid var(--line);padding-left:8px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pic{max-width:min(260px,100%);border-radius:8px;display:block;margin-top:4px;cursor:zoom-in}
+.rx{display:inline-block;background:var(--in);border-radius:10px;padding:1px 8px;margin:4px 4px 0 0;font-size:13px;cursor:pointer}.rx.me{outline:1px solid var(--acc)}
+.act{display:none;position:absolute;right:14px;top:-14px;background:var(--main);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;max-width:280px;z-index:2}
+.m:hover .act,.m.show .act{display:flex}.act button{background:none;border:0;padding:5px 7px;font-size:14px}
+#typ{height:20px;padding:0 14px;font-size:12px;color:var(--mute)}
+#rbar{display:none;padding:6px 14px;font-size:12px;color:var(--mute);border-top:1px solid var(--line);justify-content:space-between;gap:8px}#rbar.on{display:flex}
+#rbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#rbar button{background:none;border:0}
+#f{display:flex;gap:8px;padding:0 14px 14px;align-items:flex-end}
+#in{flex:1;background:var(--in);color:var(--text);border:0;border-radius:8px;padding:12px;font:inherit;resize:none;max-height:120px}
+#send,#cam{border:0;border-radius:8px;padding:0 16px;font-weight:600;height:44px}
+#send{background:var(--acc);color:#fff}#cam{background:var(--in);padding:0 12px;font-size:18px}
+.empty{color:var(--mute);text-align:center;padding:40px 16px}
+#modal{position:fixed;inset:0;background:#0008;display:none;place-items:center;z-index:9;padding:16px}
+#modal.on{display:grid}
+#box{background:var(--main);border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90%;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+#box input{background:var(--in);color:var(--text);border:0;border-radius:8px;padding:11px;font:inherit;width:100%}
+#box .go{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px;font-weight:600}
+#box .err{color:#ed4245;font-size:13px;min-height:16px}
+.chip{display:inline-block;background:var(--in);border-radius:12px;padding:3px 10px;margin:2px;font-size:13px}
+@media(max-width:700px){#side{width:100%;border:0}#main{display:none}
+body.chat #side{display:none}body.chat #main{display:flex}#back{display:block}}
+</style></head><body>
+<div id="app">
+ <aside id="side"><div id="brand">Chattr</div>
+  <div class="btns"><button id="addf">+ Friend</button><button class="g" id="addg">+ Group</button></div>
+  <div class="btns" id="instw" hidden><button class="g" id="inst">⬇ Install Chattr app</button></div>
+  <div id="list"></div><div id="me"></div></aside>
+ <section id="main">
+  <div id="top"><button id="back" aria-label="Back">‹</button><div id="hd"><span id="cn">Select a chat</span><span id="st"></span></div><button id="more" aria-label="Group settings">⋯</button></div>
+  <div id="msgs"><div class="empty">Add a friend or create a group to start chatting.</div></div>
+  <div id="typ"></div><div id="rbar"><span id="rt"></span><button id="rc" aria-label="Cancel reply">✕</button></div>
+  <div id="f"><button id="cam" aria-label="Send photo">📷</button><textarea id="in" rows="1" placeholder="Message"></textarea><button id="send">Send</button><input type="file" id="file" accept="image/*" hidden></div>
+ </section>
+</div>
+<div id="modal"><div id="box"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyAqJTssJ6sQohOmun2qNPITL6iAUPrks60",authDomain:"chattr-9ab01.firebaseapp.com",databaseURL:"https://chattr-9ab01-default-rtdb.firebaseio.com",projectId:"chattr-9ab01",storageBucket:"chattr-9ab01.firebasestorage.app",messagingSenderId:"853196971316",appId:"1:853196971316:web:5d0f10e6005d9f47f0d961"};
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const COLORS=["#5865f2","#3ba55d","#eb459e","#faa61a","#ed4245","#00a8fc","#9b59b6"],EM=["👍","❤️","😂","😮","😢","🔥"];
+let db,uid,me={},cur=null,chats={},members=[],users={},pres={},watched={},prevU={},first=true,replyTo=null;
+let msgRef,typRef,metaRef,msgs=[],typers={};
+const SV=()=>firebase.database.ServerValue;
+const avh=(n,c)=>`<div class="av" style="background:${c||COLORS[0]}">${esc((n||"?").trim()[0].toUpperCase())}</div>`;
+const fmt=ts=>{const d=new Date(ts),t=d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?"Today at "+t:d.toLocaleDateString()+" "+t};
+const ago=ts=>{const m=Math.floor((Date.now()-ts)/6e4);return m<1?"just now":m<60?m+"m ago":m<1440?Math.floor(m/60)+"h ago":new Date(ts).toLocaleDateString()};
+const user=id=>users[id]||{name:"Someone",color:COLORS[0]};
+async function loadUser(id){if(!users[id]||!users[id].name){const s=await db.ref("users/"+id).get();users[id]=s.val()||{name:"Someone",color:COLORS[0]}}return users[id]}
+const online=id=>pres[id]&&pres[id].online;
+function watch(id){if(!id||watched[id])return;watched[id]=1;db.ref("presence/"+id).on("value",s=>{pres[id]=s.val()||{};renderList();renderHead()})}
+
+let auth,authErr="";
+const friendly=e=>({"auth/invalid-email":"That email address doesn’t look right.","auth/missing-password":"Enter your password.","auth/wrong-password":"Wrong email or password.","auth/invalid-credential":"Wrong email or password.","auth/user-not-found":"No account with that email.","auth/email-already-in-use":"That email already has an account. Tap “I already have an account”.","auth/weak-password":"Password needs at least 6 characters.","auth/too-many-requests":"Too many tries. Wait a moment and try again.","auth/unauthorized-domain":"Add this site under Authorized domains in Firebase Authentication.","auth/operation-not-allowed":"That sign-in method isn’t enabled in Firebase yet.","auth/network-request-failed":"No connection. Check your internet."}[e.code]||e.message||"Something went wrong.");
+async function boot(){
+ firebase.initializeApp(firebaseConfig);db=firebase.database();auth=firebase.auth();
+ try{await auth.getRedirectResult()}catch(e){authErr=friendly(e)}
+ auth.onAuthStateChanged(async u=>{
+  if(!u){uid=null;return showAuth(authErr)}
+  if(uid&&u.uid!==uid){location.reload();return}
+  if(uid)return;uid=u.uid;
+  const s=await db.ref("users/"+uid).get();
+  if(s.exists()){me=s.val();users[uid]=me;$("#modal").classList.remove("on");start()}else pickName();
+ });
+}
+function showAuth(msg){
+ const up=!!(auth.currentUser&&auth.currentUser.isAnonymous);let create=up;
+ $("#box").innerHTML=`<b style="font-size:18px">${up?"Secure your account":"Sign in to Chattr"}</b>${up?`<small style="color:var(--mute)">Link a sign-in so you never lose your chats, even if you clear your browser.</small>`:""}
+ <button class="go" id="gg" style="background:#fff;color:#333;border:1px solid var(--line)">Continue with Google</button>
+ <input id="em" type="email" placeholder="Email" autocomplete="email" autocapitalize="off"><input id="pw" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+ <div class="err" id="ae">${esc(msg||"")}</div><button class="go" id="si"></button>
+ <button class="row" id="su" style="justify-content:center"></button><button class="row" id="fp" style="justify-content:center;font-size:13px">Forgot password?</button>
+ <button class="row" id="alt" style="justify-content:center;font-size:13px">${up?"Not now":"Continue as guest"}</button>`;
+ $("#modal").classList.add("on");
+ const label=()=>{$("#si").textContent=create?"Create account":"Sign in";$("#su").textContent=create?"I already have an account":"Create a new account"};label();
+ const err=t=>$("#ae").textContent=t,done=()=>{$("#modal").classList.remove("on");renderMe()};
+ $("#su").onclick=()=>{create=!create;label()};
+ $("#alt").onclick=()=>up?$("#modal").classList.remove("on"):auth.signInAnonymously().catch(e=>err(friendly(e)));
+ $("#fp").onclick=async()=>{const m=$("#em").value.trim();if(!m)return err("Type your email first.");try{await auth.sendPasswordResetEmail(m);err("Password reset email sent.")}catch(e){err(friendly(e))}};
+ $("#si").onclick=async()=>{const m=$("#em").value.trim(),p=$("#pw").value,cu=auth.currentUser;
+  try{
+   if(create){if(cu&&cu.isAnonymous){await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(m,p));done()}else await auth.createUserWithEmailAndPassword(m,p)}
+   else await auth.signInWithEmailAndPassword(m,p);
+  }catch(e){err(friendly(e))}};
+ $("#gg").onclick=async()=>{const p=new firebase.auth.GoogleAuthProvider(),cu=auth.currentUser;
+  try{if(cu&&cu.isAnonymous){await cu.linkWithPopup(p);done()}else await auth.signInWithPopup(p)}
+  catch(e){
+   if(e.code==="auth/credential-already-in-use"&&e.credential){try{await auth.signInWithCredential(e.credential)}catch(x){err(friendly(x))}}
+   else if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment"].includes(e.code)){cu&&cu.isAnonymous?cu.linkWithRedirect(p):auth.signInWithRedirect(p)}
+   else if(!["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(e.code))err(friendly(e))}};
+}
+function renderMe(){
+ const an=!!(auth.currentUser&&auth.currentUser.isAnonymous),bell=window.Notification&&Notification.permission==="default";
+ $("#me").innerHTML=`<span>@${esc(me.name)}</span><span style="display:flex;gap:6px">${bell?`<button id="bell">🔔 Alerts</button>`:""}${an?`<button id="sec">🔒 Secure</button>`:`<button id="so">Sign out</button>`}</span>`;
+ if($("#bell"))$("#bell").onclick=async()=>{await Notification.requestPermission();renderMe()};
+ if($("#sec"))$("#sec").onclick=()=>showAuth();
+ if($("#so"))$("#so").onclick=()=>auth.signOut().then(()=>location.reload());
+}
+function pickName(msg){
+ $("#box").innerHTML=`<b>Choose your username</b><input id="un" placeholder="letters, numbers, _" maxlength="20" autocapitalize="off"><div class="err">${msg||""}</div><button class="go" id="ok">Continue</button>`;
+ $("#modal").classList.add("on");$("#ok").onclick=async()=>{
+  const n=$("#un").value.trim(),k=n.toLowerCase();
+  if(!/^[a-z0-9_]{3,20}$/.test(k))return pickName("3–20 letters, numbers or underscores.");
+  const r=await db.ref("usernames/"+k).transaction(v=>v===null?uid:undefined);
+  if(!r.committed)return pickName("That name is taken.");
+  me={name:n,color:COLORS[Math.floor(Math.random()*COLORS.length)]};
+  await db.ref("users/"+uid).set(me);users[uid]=me;$("#modal").classList.remove("on");start()};
+}
+function start(){
+ renderMe();
+ db.ref(".info/connected").on("value",s=>{if(!s.val())return;const r=db.ref("presence/"+uid);
+  r.onDisconnect().set({online:false,last:SV().TIMESTAMP}).then(()=>r.set({online:true,last:SV().TIMESTAMP}))});
+ db.ref("userChats/"+uid).on("value",async s=>{chats=s.val()||{};
+  const others=Object.values(chats).filter(c=>c.other).map(c=>c.other);
+  await Promise.all(others.map(loadUser));others.forEach(watch);
+  let tot=0;
+  for(const [id,c] of Object.entries(chats)){const n=c.unread||0;tot+=n;
+   if(!first&&n>(prevU[id]||0)&&(id!==cur||document.hidden))notify(c,id);prevU[id]=n}
+  first=false;document.title=(tot?`(${tot}) `:"")+"Chattr";
+  if(cur&&!document.hidden&&chats[cur]&&chats[cur].unread)markRead();
+  renderList()});
+}
+function notify(c,id){try{if(Notification.permission==="granted"){const n=new Notification(title(c),{body:c.last||"New message",tag:id});n.onclick=()=>{window.focus();openChat(id)}}}catch(e){}}
+function markRead(){if(cur)db.ref(`userChats/${uid}/${cur}/unread`).set(0)}
+window.addEventListener("focus",()=>{if(cur&&chats[cur]&&chats[cur].unread)markRead()});
+
+const title=c=>c.type==="group"?c.name:user(c.other).name;
+function renderHead(){const c=chats[cur];if(!c){$("#more").style.display="none";return}
+ const g=c.type==="group";$("#cn").textContent=(g?"👥 ":"")+title(c);let st="";
+ if(g)st=`${members.length} members · ${members.filter(online).length} online`;
+ else{const p=pres[c.other];if(p)st=p.online?"● Online":p.last?"Last seen "+ago(p.last):""}
+ $("#st").textContent=st;$("#more").style.display=g?"block":"none"}
+function renderList(){
+ const arr=Object.entries(chats).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+ $("#list").innerHTML=arr.length?arr.map(([id,c])=>{const g=c.type==="group";
+  return `<button class="row ${id===cur?"on":""}" data-c="${id}"><div class="avw">${avh(title(c),g?"#3ba55d":user(c.other).color)}${!g&&online(c.other)?'<i class="dot"></i>':""}</div><div class="tx"><b>${esc(title(c))}</b><small>${esc(c.last||"No messages yet")}</small></div>${c.unread?`<span class="bd">${c.unread>99?"99+":c.unread}</span>`:""}</button>`}).join(""):`<div class="empty">No chats yet.<br>Tap “+ Friend” to begin.</div>`;
+ $("#list").querySelectorAll(".row").forEach(b=>b.onclick=()=>openChat(b.dataset.c));
+ renderHead();
+}
+async function openChat(id){
+ cur=id;replyTo=null;showReply();typers={};showTyp();document.body.classList.add("chat");
+ [msgRef,typRef,metaRef].forEach(r=>r&&r.off());
+ members=[];msgs=[];renderMsgs();renderList();markRead();
+ metaRef=db.ref(`chats/${id}/meta/members`);
+ metaRef.on("value",async s=>{members=Object.keys(s.val()||{});await Promise.all(members.map(loadUser));members.forEach(watch);renderHead();renderMsgs()});
+ msgRef=db.ref(`chats/${id}/messages`).orderByChild("ts").limitToLast(60);
+ msgRef.on("value",s=>{msgs=[];s.forEach(c=>{msgs.push({id:c.key,...c.val()})});renderMsgs();if(!document.hidden)markRead()});
+ typRef=db.ref(`typing/${id}`);typRef.on("value",s=>{typers=s.val()||{};showTyp()});
+}
+const okImg=s=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s||"");
+function renderMsgs(){
+ const box=$("#msgs");
+ if(!cur){box.innerHTML=`<div class="empty">Add a friend or create a group to start chatting.</div>`;return}
+ const stick=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+ if(!msgs.length){box.innerHTML=`<div class="empty">No messages yet. Say hi 👋</div>`;return}
+ box.innerHTML=msgs.map(m=>{const u=user(m.uid),r=m.reactions||{};
+  const rx=Object.entries(r).map(([e,o])=>{const n=Object.keys(o).length;return n?`<span class="rx ${o[uid]?"me":""}" data-e="${e}">${e} ${n}</span>`:""}).join("");
+  return `<div class="m" data-id="${m.id}">${avh(u.name,u.color)}<div class="b"><div class="h" style="color:${u.color}">${esc(u.name)}<span class="t">${fmt(m.ts)}${m.edited?" (edited)":""}</span></div>
+  ${m.reply?`<div class="rp">↪ ${esc(m.reply.name)}: ${esc(m.reply.text)}</div>`:""}
+  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}<div>${rx}</div></div>
+  <div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${m.uid===uid?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div>`}).join("");
+ if(stick)box.scrollTop=box.scrollHeight;
+}
+$("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const id=m.dataset.id,t=e.target;
+ if(t.classList.contains("rx"))return react(id,t.dataset.e);
+ if(t.dataset.a)return act(id,t.dataset.a);
+ if(t.classList.contains("pic")){$("#box").innerHTML=`<img src="${t.src}" style="width:100%;border-radius:8px" alt="">`;return $("#modal").classList.add("on")}
+ document.querySelectorAll(".m.show").forEach(x=>x!==m&&x.classList.remove("show"));m.classList.toggle("show")};
+function react(id,e){const m=msgs.find(x=>x.id===id);if(!m)return;const r=db.ref(`chats/${cur}/messages/${id}/reactions/${e}/${uid}`);
+ (m.reactions&&m.reactions[e]&&m.reactions[e][uid])?r.remove():r.set(true)}
+function act(id,a){
+ const m=msgs.find(x=>x.id===id);if(!m)return;
+ if(EM.includes(a))return react(id,a);
+ if(a==="r"){replyTo={id,name:user(m.uid).name,text:(m.text||"📷 Photo").slice(0,60)};showReply();return $("#in").focus()}
+ const r=db.ref(`chats/${cur}/messages/${id}`);
+ if(a==="d"){if(confirm("Delete this message?"))r.remove()}else{const t=prompt("Edit message",m.text);if(t&&t.trim())r.update({text:t.trim(),edited:true})}
+}
+function showReply(){$("#rbar").classList.toggle("on",!!replyTo);$("#rt").textContent=replyTo?`Replying to ${replyTo.name}: ${replyTo.text}`:""}
+$("#rc").onclick=()=>{replyTo=null;showReply()};
+async function send(text,img){
+ if(!cur)return;text=(text||"").trim();if(!text&&!img)return;
+ const ts=SV().TIMESTAMP,up={},k=db.ref(`chats/${cur}/messages`).push().key;
+ const msg={uid,ts};if(text)msg.text=text.slice(0,2000);if(img)msg.img=img;if(replyTo)msg.reply={name:replyTo.name,text:replyTo.text};
+ const last=me.name+": "+(img&&!text?"📷 Photo":text.slice(0,50));
+ up[`chats/${cur}/messages/${k}`]=msg;
+ members.forEach(m=>{up[`userChats/${m}/${cur}/ts`]=ts;up[`userChats/${m}/${cur}/last`]=last;if(m!==uid)up[`userChats/${m}/${cur}/unread`]=SV().increment(1)});
+ db.ref(`typing/${cur}/${uid}`).remove();replyTo=null;showReply();
+ try{await db.ref().update(up)}catch(e){alert("Could not send. Check your connection.")}
+}
+function sendBox(){const el=$("#in"),t=el.value;if(!t.trim())return;el.value="";el.style.height="auto";send(t)}
+$("#cam").onclick=()=>$("#file").click();
+$("#file").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f||!cur)return;
+ const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{
+  const k=Math.min(1,900/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement("canvas");
+  c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);let q=.75,d=c.toDataURL("image/jpeg",q);
+  while(d.length>250000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}send("",d)};im.src=rd.result};rd.readAsDataURL(f)};
+let tt=0,tm;
+function typing(){if(!cur)return;const n=Date.now(),r=db.ref(`typing/${cur}/${uid}`);
+ if(n-tt>2500){tt=n;r.set(me.name);r.onDisconnect().remove()}clearTimeout(tm);tm=setTimeout(()=>{r.remove();tt=0},3000)}
+function showTyp(){const n=Object.entries(typers).filter(([k])=>k!==uid).map(([k,v])=>v);
+ $("#typ").textContent=n.length?(n.length>2?"Several people are typing…":n.join(" and ")+(n.length>1?" are":" is")+" typing…"):""}
+
+async function findUser(){const n=$("#q").value.trim().toLowerCase();if(!n)return null;
+ const id=(await db.ref("usernames/"+n).get()).val();
+ if(!id){$("#err").textContent="No user named “"+n+"”.";return null}
+ if(id===uid){$("#err").textContent="That’s you!";return null}
+ await loadUser(id);$("#err").textContent="";$("#q").value="";return id}
+function modal(mode){
+ $("#box").innerHTML=`<b>${mode==="friend"?"Add a friend":"New group"}</b>${mode==="group"?`<input id="gn" placeholder="Group name" maxlength="40">`:""}
+ <input id="q" placeholder="${mode==="friend"?"Friend’s username":"Add a username, then press Enter"}" autocapitalize="off"><div id="chips"></div><div class="err" id="err"></div>
+ <button class="go" id="go">${mode==="friend"?"Start chat":"Create group"}</button><button class="row" id="x" style="justify-content:center">Cancel</button>`;
+ $("#modal").classList.add("on");$("#x").onclick=()=>$("#modal").classList.remove("on");$("#q").focus();
+ const picked={};
+ $("#q").onkeydown=async e=>{if(e.key==="Enter"){e.preventDefault();if(mode==="friend")return $("#go").click();
+  const id=await findUser();if(id){picked[id]=1;$("#chips").innerHTML=Object.keys(picked).map(i=>`<span class="chip">@${esc(user(i).name)}</span>`).join("")}}};
+ $("#go").onclick=async()=>{
+  if(mode==="friend"){const id=await findUser();if(id)startDm(id)}
+  else{if($("#q").value.trim()){const n=await findUser();if(n)picked[n]=1}
+   const name=$("#gn").value.trim();if(!name||!Object.keys(picked).length)return $("#err").textContent="Add a name and at least one person.";makeGroup(name,Object.keys(picked))}};
+}
+async function startDm(other){
+ const cid="dm_"+[uid,other].sort().join("_"),ts=SV().TIMESTAMP;
+ if(!(await db.ref(`chats/${cid}/meta`).get()).exists())await db.ref().update({[`chats/${cid}/meta`]:{type:"dm",members:{[uid]:true,[other]:true}},[`userChats/${uid}/${cid}`]:{type:"dm",other,ts,last:""},[`userChats/${other}/${cid}`]:{type:"dm",other:uid,ts,last:""}});
+ $("#modal").classList.remove("on");openChat(cid);
+}
+async function makeGroup(name,ids){
+ const cid=db.ref("chats").push().key,ts=SV().TIMESTAMP,all=[uid,...ids],up={};
+ up[`chats/${cid}/meta`]={type:"group",name,members:Object.fromEntries(all.map(i=>[i,true]))};
+ all.forEach(i=>up[`userChats/${i}/${cid}`]={type:"group",name,ts,last:""});
+ await db.ref().update(up);$("#modal").classList.remove("on");openChat(cid);
+}
+function manage(){
+ const c=chats[cur];if(!c)return;
+ $("#box").innerHTML=`<b>Group settings</b><input id="gn" value="${esc(c.name)}" maxlength="40"><button class="go" id="rn">Rename group</button>
+ <div>${members.map(m=>`<span class="chip">${online(m)?"● ":""}@${esc(user(m).name)}</span>`).join("")}</div>
+ <input id="q" placeholder="Add someone by username" autocapitalize="off"><div class="err" id="err"></div><button class="go" id="add">Add member</button>
+ <button class="row" id="lv" style="justify-content:center;color:#ed4245">Leave group</button><button class="row" id="x" style="justify-content:center">Close</button>`;
+ $("#modal").classList.add("on");$("#x").onclick=()=>$("#modal").classList.remove("on");
+ $("#rn").onclick=async()=>{const n=$("#gn").value.trim();if(!n)return;const up={[`chats/${cur}/meta/name`]:n};
+  members.forEach(m=>up[`userChats/${m}/${cur}/name`]=n);await db.ref().update(up);$("#modal").classList.remove("on")};
+ $("#add").onclick=async()=>{const id=await findUser();if(!id)return;if(members.includes(id))return $("#err").textContent="Already in the group.";
+  await db.ref().update({[`chats/${cur}/meta/members/${id}`]:true,[`userChats/${id}/${cur}`]:{type:"group",name:c.name,ts:SV().TIMESTAMP,last:""}});$("#modal").classList.remove("on")};
+ $("#lv").onclick=async()=>{if(!confirm("Leave this group?"))return;const id=cur;
+  [msgRef,typRef,metaRef].forEach(r=>r&&r.off());cur=null;members=[];msgs=[];
+  await db.ref().update({[`chats/${id}/meta/members/${uid}`]:null,[`userChats/${uid}/${id}`]:null});
+  $("#modal").classList.remove("on");document.body.classList.remove("chat");$("#cn").textContent="Select a chat";$("#st").textContent="";renderMsgs();renderList()};
+}
+$("#more").onclick=manage;
+$("#addf").onclick=()=>modal("friend");$("#addg").onclick=()=>modal("group");
+$("#modal").onclick=e=>{if(e.target.id==="modal"&&uid&&me.name)e.target.classList.remove("on")};
+$("#back").onclick=()=>{document.body.classList.remove("chat");cur=null;[msgRef,typRef,metaRef].forEach(r=>r&&r.off());renderMsgs();renderList()};
+$("#send").onclick=sendBox;
+$("#in").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(min-width:701px)").matches){e.preventDefault();sendBox()}});
+$("#in").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=e.target.scrollHeight+"px";typing()});
+// ---- installable app (PWA) ----
+let deferredInstall=null;const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+if(!standalone){
+ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("#instw").hidden=false});
+ if(ios)$("#instw").hidden=false;
+}
+window.addEventListener("appinstalled",()=>{$("#instw").hidden=true});
+$("#inst").onclick=async()=>{if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$("#instw").hidden=true}
+ else alert("To install: tap the Share button, then “Add to Home Screen”.")};
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+boot().catch(e=>{$("#me").textContent="Could not connect: "+(e.message||e)});
+</script></body></html>
