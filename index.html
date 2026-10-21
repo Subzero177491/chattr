@@ -37,9 +37,16 @@ button{font:inherit;color:inherit;cursor:pointer}
 #sbar{display:none;padding:8px 14px;gap:8px;border-bottom:1px solid var(--line)}#sbar.on{display:flex}
 #sbar input{flex:1;background:var(--in);color:var(--text);border:0;border-radius:8px;padding:9px;font:inherit}#sbar button{background:none;border:0}
 #msgs{flex:1;overflow-y:auto;padding:12px 0}
-.m{display:flex;gap:12px;padding:4px 14px;position:relative}.m:hover{background:var(--hover)}
-.m .av{margin-top:2px;width:36px;height:36px}.b{min-width:0;flex:1}
-.h{font-weight:600}.t{color:var(--mute);font-size:11px;margin-left:6px;font-weight:400}
+.m{display:flex;gap:8px;padding:2px 14px;position:relative;align-items:flex-end}.m.mine{flex-direction:row-reverse}
+.m .av{width:32px;height:32px;font-size:13px}
+.b{min-width:0;max-width:min(78%,520px);background:var(--in);border-radius:16px 16px 16px 4px;padding:7px 12px}
+.m.mine .b{background:var(--acc);color:#fff;border-radius:16px 16px 4px 16px}
+.h{font-weight:600;font-size:13px}.t{color:var(--mute);font-size:11px;margin-top:2px;text-align:right}
+.m.mine .t,.m.mine .seen,.m.mine .vp .du{color:#ffffffcc}.m.mine .rp{color:#ffffffcc;border-left-color:#fff8}
+.m.mine .rx{background:#ffffff33;color:#fff}.m.mine .rx.me{outline-color:#fff}
+.m.mine .vp{background:#ffffff33;color:#fff}.m.mine .vp .bar{background:#fff5}.m.mine .vp .bar i{background:#fff}
+.m:not(.mine) .act{right:auto;left:56px}
+body:not(.chat) #f,body:not(.chat) #typ{display:none}
 .x{white-space:pre-wrap;overflow-wrap:anywhere}
 .rp{font-size:12px;color:var(--mute);border-left:3px solid var(--line);padding-left:8px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pic{max-width:min(260px,100%);border-radius:8px;display:block;margin-top:4px;cursor:zoom-in}
@@ -204,7 +211,7 @@ function renderList(){
   h+=arr.map(([id,c])=>{const g=c.type==="group",u=g?{}:user(c.other);
    return `<button class="row ${id===cur?"on":""}" data-c="${id}"><div class="avw">${avh(title(c),g?"#3ba55d":u.color,u.avatar)}${!g&&online(c.other)?'<i class="dot"></i>':""}</div><div class="tx"><b>${esc(title(c))}</b><small>${esc(c.last||"No messages yet")}</small></div>${c.unread?`<span class="bd">${c.unread>99?"99+":c.unread}</span>`:""}</button>`}).join("")}
  else if(!rq.length)h=`<div class="empty">No chats yet.<br>Tap “+ Friend” to send a request.</div>`;
- $("#list").innerHTML=h;renderHead();
+ $("#list").innerHTML=h;$("#addg").style.display=Object.keys(friends).length?"":"none";renderHead();
 }
 $("#list").onclick=e=>{const y=e.target.closest("[data-y]"),n=e.target.closest("[data-n]"),c=e.target.closest("[data-c]");
  if(y)return accept(y.dataset.y);if(n)return db.ref(`requests/${uid}/${n.dataset.n}`).remove();if(c)openChat(c.dataset.c)};
@@ -229,12 +236,12 @@ function renderMsgs(){
  let seenFor=null,seenTxt="";
  if(!searchOn)for(let i=msgs.length-1;i>=0;i--)if(msgs[i].uid===uid){seenFor=msgs[i].id;const ts=msgs[i].ts,rd=members.filter(m=>m!==uid&&reads[m]&&reads[m]>=ts);
   seenTxt=rd.length?(g?"Seen by "+(rd.length>2?rd.length+" people":rd.map(m=>user(m).name).join(", ")):"Seen"):"";break}
- box.innerHTML=list.map(m=>{const u=user(m.uid),r=m.reactions||{};
+ box.innerHTML=list.map(m=>{const u=user(m.uid),r=m.reactions||{},mine=m.uid===uid;
   const rx=Object.entries(r).map(([e,o])=>{const n=Object.keys(o).length;return n?`<span class="rx ${o[uid]?"me":""}" data-e="${e}">${e} ${n}</span>`:""}).join("");
-  return `<div class="m" data-id="${m.id}">${avh(u.name,u.color,u.avatar)}<div class="b"><div class="h" style="color:${u.color}">${esc(u.name)}<span class="t">${fmt(m.ts)}${m.edited?" (edited)":""}</span></div>
+  return `<div class="m${mine?" mine":""}" data-id="${m.id}">${mine?"":avh(u.name,u.color,u.avatar)}<div class="b">${!mine&&(g||searchOn)?`<div class="h" style="color:${u.color}">${esc(u.name)}</div>`:""}
   ${m.reply?`<div class="rp">↪ ${esc(m.reply.name)}: ${esc(m.reply.text)}</div>`:""}
-  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<button class="vp" data-v="${m.id}"><span class="pl">▶</span><span class="bar"><i></i></span><span class="du">🎤 ${vdur(m.dur)}</span></button>`:""}<div>${rx}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}</div>
-  <div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${m.uid===uid?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div>`}).join("");
+  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<button class="vp" data-v="${m.id}"><span class="pl">▶</span><span class="bar"><i></i></span><span class="du">🎤 ${vdur(m.dur)}</span></button>`:""}<div>${rx}</div><div class="t">${fmt(m.ts)}${m.edited?" · edited":""}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}</div>
+  <div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${mine?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div>`}).join("");
  if(stick&&!searchOn)box.scrollTop=box.scrollHeight;
 }
 $("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const vp=e.target.closest(".vp");if(vp)return playVoice(vp);const id=m.dataset.id,t=e.target;
