@@ -43,7 +43,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .x{white-space:pre-wrap;overflow-wrap:anywhere}
 .rp{font-size:12px;color:var(--mute);border-left:3px solid var(--line);padding-left:8px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pic{max-width:min(260px,100%);border-radius:8px;display:block;margin-top:4px;cursor:zoom-in}
-audio{max-width:100%;height:38px;margin-top:4px;display:block}
+.vp{display:flex;align-items:center;gap:10px;background:var(--in);border:0;border-radius:18px;padding:8px 14px;margin-top:4px;min-width:170px;max-width:100%}.vp .pl{font-size:16px}.vp .bar{flex:1;height:4px;background:var(--line);border-radius:2px;overflow:hidden}.vp .bar i{display:block;height:100%;width:0;background:var(--acc)}.vp .du{font-size:12px;color:var(--mute)}
 .seen{font-size:11px;color:var(--mute);margin-top:2px}
 .rx{display:inline-block;background:var(--in);border-radius:10px;padding:1px 8px;margin:4px 4px 0 0;font-size:13px;cursor:pointer}.rx.me{outline:1px solid var(--acc)}
 .act{display:none;position:absolute;right:14px;top:-14px;background:var(--main);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;max-width:280px;z-index:2}
@@ -223,7 +223,7 @@ async function openChat(id){
 function renderMsgs(){
  const box=$("#msgs");
  if(!cur){box.innerHTML=`<div class="empty">Add a friend or create a group to start chatting.</div>`;return}
- if([...box.querySelectorAll("audio")].some(a=>!a.paused)){pend=true;return}
+ if(vplay&&!vplay.paused){pend=true;return}
  const stick=box.scrollHeight-box.scrollTop-box.clientHeight<120,g=chats[cur]&&chats[cur].type==="group",list=searchOn?sres:msgs;
  if(!list.length){box.innerHTML=`<div class="empty">${searchOn?(sall===null?"Searching…":$("#sq").value.trim()?"No matches.":"Type something to search."):"No messages yet. Say hi 👋"}</div>`;return}
  let seenFor=null,seenTxt="";
@@ -233,12 +233,11 @@ function renderMsgs(){
   const rx=Object.entries(r).map(([e,o])=>{const n=Object.keys(o).length;return n?`<span class="rx ${o[uid]?"me":""}" data-e="${e}">${e} ${n}</span>`:""}).join("");
   return `<div class="m" data-id="${m.id}">${avh(u.name,u.color,u.avatar)}<div class="b"><div class="h" style="color:${u.color}">${esc(u.name)}<span class="t">${fmt(m.ts)}${m.edited?" (edited)":""}</span></div>
   ${m.reply?`<div class="rp">↪ ${esc(m.reply.name)}: ${esc(m.reply.text)}</div>`:""}
-  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<audio controls preload="none" src="${m.aud}"></audio>`:""}<div>${rx}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}</div>
+  ${m.text?`<div class="x">${esc(m.text)}</div>`:""}${okImg(m.img)?`<img class="pic" src="${m.img}" alt="photo">`:""}${okAud(m.aud)?`<button class="vp" data-v="${m.id}"><span class="pl">▶</span><span class="bar"><i></i></span><span class="du">🎤 ${vdur(m.dur)}</span></button>`:""}<div>${rx}</div>${m.id===seenFor&&seenTxt?`<div class="seen">✓ ${esc(seenTxt)}</div>`:""}</div>
   <div class="act">${EM.map(e=>`<button data-a="${e}">${e}</button>`).join("")}<button data-a="r">Reply</button>${m.uid===uid?`<button data-a="e">Edit</button><button data-a="d">Delete</button>`:""}</div></div>`}).join("");
  if(stick&&!searchOn)box.scrollTop=box.scrollHeight;
 }
-["pause","ended"].forEach(ev=>$("#msgs").addEventListener(ev,()=>{if(pend){pend=false;renderMsgs()}},true));
-$("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const id=m.dataset.id,t=e.target;
+$("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const vp=e.target.closest(".vp");if(vp)return playVoice(vp);const id=m.dataset.id,t=e.target;
  if(t.classList.contains("rx"))return react(id,t.dataset.e);
  if(t.dataset.a)return act(id,t.dataset.a);
  if(t.classList.contains("pic")){$("#box").innerHTML=`<img src="${t.src}" style="width:100%;border-radius:8px" alt="">`;return $("#modal").classList.add("on")}
@@ -276,24 +275,45 @@ $("#file").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f||!cur)
   while(d.length>250000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}send("",d)};im.src=rd.result};rd.readAsDataURL(f)};
 
 // voice messages
-let rec=null,recChunks=[],recT0=0,recTick=null,recStream=null;
+const vdur=d=>{d=Math.round(d||0);return Math.floor(d/60)+":"+String(d%60).padStart(2,"0")};
+let vplay=null,vid=null;
+const flush=()=>{if(pend){pend=false;renderMsgs()}};
+function playVoice(btn){
+ const id=btn.dataset.v,m=findMsg(id);if(!m||!okAud(m.aud))return;
+ if(vplay&&vid===id){vplay.paused?vplay.play():vplay.pause();return}
+ if(vplay){const o=vplay;vplay=null;vid=null;o.pause()}
+ const a=new Audio(m.aud),el=()=>document.querySelector(`.vp[data-v="${id}"]`),pl=()=>el()&&el().querySelector(".pl"),bar=()=>el()&&el().querySelector("i");
+ vplay=a;vid=id;
+ a.onplay=()=>{if(pl())pl().textContent="⏸"};
+ a.onpause=()=>{if(pl())pl().textContent="▶";if(vplay===a)flush()};
+ a.ontimeupdate=()=>{const d=m.dur||a.duration;if(d&&isFinite(d)&&bar())bar().style.width=Math.min(100,a.currentTime/d*100)+"%"};
+ a.onended=()=>{if(bar())bar().style.width="0";if(pl())pl().textContent="▶";vplay=null;vid=null;flush()};
+ a.onerror=()=>{vplay=null;vid=null;if(pl())pl().textContent="⚠";alert("This voice message can’t be played on this device. Clips recorded on one type of phone may not play on another older one.")};
+ a.play().catch(()=>{});
+}
+let rec=null,recChunks=[],recT0=0,recTick=null,recStream=null,recBytes=0;
 async function recStart(){
  if(!cur||rec)return;
- if(!navigator.mediaDevices||!window.MediaRecorder)return alert("Voice messages aren’t supported on this browser.");
- try{recStream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){return alert("Allow microphone access to send voice messages.")}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder)return alert("This browser can’t record voice messages. Try Chrome, or Safari on iOS 14.3 or newer.");
+ try{recStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+ catch(e){return alert(e.name==="NotAllowedError"?"The microphone is blocked. Allow the microphone for this site in your browser settings, then try again.":"Couldn’t start the microphone ("+e.name+").")}
  const mt=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"].find(t=>MediaRecorder.isTypeSupported(t));
- rec=new MediaRecorder(recStream,Object.assign(mt?{mimeType:mt}:{},{audioBitsPerSecond:24000}));recChunks=[];
- rec.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};
- rec.start();recT0=Date.now();$("#recbar").classList.add("on");$("#rtime").textContent="🔴 0:00";
- recTick=setInterval(()=>{const s=Math.floor((Date.now()-recT0)/1000);$("#rtime").textContent=`🔴 ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;if(s>=45)recStop(true)},250);
+ try{rec=new MediaRecorder(recStream,Object.assign(mt?{mimeType:mt}:{},{audioBitsPerSecond:24000}))}
+ catch(e){recStream.getTracks().forEach(t=>t.stop());rec=null;return alert("Recording isn’t supported here ("+e.name+").")}
+ recChunks=[];recBytes=0;
+ rec.ondataavailable=e=>{if(e.data&&e.data.size){recChunks.push(e.data);recBytes+=e.data.size;if(recBytes>265000)recStop(true)}};
+ rec.start(500);recT0=Date.now();$("#recbar").classList.add("on");$("#rtime").textContent="🔴 0:00";
+ recTick=setInterval(()=>{const s=Math.floor((Date.now()-recT0)/1000);$("#rtime").textContent="🔴 "+vdur(s);if(s>=45)recStop(true)},250);
 }
 function recStop(go){
  if(!rec)return;clearInterval(recTick);$("#recbar").classList.remove("on");
  const r=rec,dur=(Date.now()-recT0)/1000;rec=null;
  r.onstop=()=>{recStream.getTracks().forEach(t=>t.stop());if(!go||dur<1)return;
-  const fr=new FileReader();fr.onload=()=>{if(!okAud(fr.result)||fr.result.length>380000)return alert("That recording couldn’t be sent (too long or unsupported).");send("",null,{aud:fr.result})};
+  const fr=new FileReader();
+  fr.onload=()=>{const d=fr.result;if(!okAud(d)||d.length>385000)return alert("That recording couldn’t be sent (unsupported format or too long). Try a shorter one.");send("",null,{aud:d,dur:Math.round(dur)})};
+  fr.onerror=()=>alert("Couldn’t read the recording.");
   fr.readAsDataURL(new Blob(recChunks,{type:r.mimeType||"audio/webm"}))};
- r.stop();
+ try{r.stop()}catch(e){recStream.getTracks().forEach(t=>t.stop())}
 }
 $("#mic").onclick=recStart;$("#rcx").onclick=()=>recStop(false);$("#rsend").onclick=()=>recStop(true);
 
