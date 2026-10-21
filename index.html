@@ -54,7 +54,7 @@ body:not(.chat) #f,body:not(.chat) #typ{display:none}
 .seen{font-size:11px;color:var(--mute);margin-top:2px}
 .rx{display:inline-block;background:var(--in);border-radius:10px;padding:1px 8px;margin:4px 4px 0 0;font-size:13px;cursor:pointer}.rx.me{outline:1px solid var(--acc)}
 .act{display:none;position:absolute;right:14px;top:-14px;background:var(--main);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;max-width:280px;z-index:2}
-.m:hover .act,.m.show .act{display:flex}.act button{background:none;border:0;padding:5px 7px;font-size:14px}
+@media(hover:hover){.m:hover .act{display:flex}}.m.show .act{display:flex}.act button{background:none;border:0;padding:5px 7px;font-size:14px}
 #typ{height:20px;padding:0 14px;font-size:12px;color:var(--mute)}
 #rbar,#recbar{display:none;padding:6px 14px;font-size:13px;color:var(--mute);border-top:1px solid var(--line);justify-content:space-between;align-items:center;gap:8px}#rbar.on,#recbar.on{display:flex}
 #rbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#rbar button{background:none;border:0}
@@ -248,7 +248,7 @@ $("#msgs").onclick=e=>{const m=e.target.closest(".m");if(!m)return;const vp=e.ta
  if(t.classList.contains("rx"))return react(id,t.dataset.e);
  if(t.dataset.a)return act(id,t.dataset.a);
  if(t.classList.contains("pic")){$("#box").innerHTML=`<img src="${t.src}" style="width:100%;border-radius:8px" alt="">`;return $("#modal").classList.add("on")}
- document.querySelectorAll(".m.show").forEach(x=>x!==m&&x.classList.remove("show"));m.classList.toggle("show")};
+ if(!matchMedia("(hover:hover)").matches){document.querySelectorAll(".m.show").forEach(x=>x!==m&&x.classList.remove("show"));m.classList.toggle("show")}};
 const findMsg=id=>msgs.find(x=>x.id===id)||(sall||[]).find(x=>x.id===id);
 function react(id,e){const m=findMsg(id);if(!m)return;const r=db.ref(`chats/${cur}/messages/${id}/reactions/${e}/${uid}`);
  (m.reactions&&m.reactions[e]&&m.reactions[e][uid])?r.remove():r.set(true)}
